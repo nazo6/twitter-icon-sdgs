@@ -1,0 +1,36 @@
+name: run
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * *'
+
+jobs: 
+  run: 
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Cache pnpm modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store
+        key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-
+
+    - uses: pnpm/action-setup@v2.1.0
+      with:
+        version: 6.32.10
+        run_install: true
+
+    - name: Run
+      run: |
+        touch .env
+        echo APP_KEY=${{ secrets.APP_KEY }} >> .env
+        echo APP_SECRET=${{ secrets.APP_SECRET }} >> .env
+        echo ACCESS_TOKEN=${{ secrets.ACCESS_TOKEN }} >> .env
+        echo ACCEESS_SECRET=${{ secrets.ACCEESS_SECRET }} >> .env
+        pnpm start -- ${{ github.event.inputs.angle }}
